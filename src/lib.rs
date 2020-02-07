@@ -55,6 +55,10 @@ impl Sudoku {
         }
     }
 
+    pub fn get(&self, col: usize, row: usize) -> Option<u32> {
+        self.grid[row][col]
+    }
+
     pub fn set(&mut self, col: usize, row: usize, v: Option<u32>) {
         self.grid[row][col] = v;
     }
