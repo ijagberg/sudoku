@@ -178,7 +178,7 @@ impl Sudoku {
         } else {
             (self.count_in_col(col, value)
                 + self.count_in_row(row, value)
-                + self.count_in_sec(row, col, value))
+                + self.count_in_sec(col, row, value))
                 == 0
         }
     }
