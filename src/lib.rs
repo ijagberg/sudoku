@@ -157,6 +157,17 @@ impl Sudoku {
         }
         sec_count
     }
+
+    pub fn can_place_value(&self, col: usize, row: usize, value: u32) -> bool {
+        if self.get(col, row) == Some(value) {
+            true
+        } else {
+            (self.count_in_col(col, value)
+                + self.count_in_row(row, value)
+                + self.count_in_sec(row, col, value))
+                == 0
+        }
+    }
 }
 
 impl std::fmt::Debug for Sudoku {
