@@ -98,7 +98,7 @@ impl Sudoku {
                         Err(_) => panic!("Invalid format of populating string"),
                     },
                 };
-                self.grid[row][col] = entry;
+                self.set(col, row, entry);
             }
         }
     }
@@ -134,7 +134,7 @@ impl Sudoku {
             // Check secs
             for row in (0..self.height()).step_by(self.sec_height) {
                 for col in (0..self.width()).step_by(self.sec_width) {
-                    if self.count_in_sec(row, col, v as u32) != 1 {
+                    if self.count_in_sec(col, row, v as u32) != 1 {
                         return false;
                     }
                 }
@@ -158,7 +158,7 @@ impl Sudoku {
             .count()
     }
 
-    pub fn count_in_sec(&self, row: usize, col: usize, value: u32) -> usize {
+    pub fn count_in_sec(&self, col: usize, row: usize, value: u32) -> usize {
         let first_row_in_sec = (row / self.sec_height) * self.sec_height;
         let first_col_in_sec = (col / self.sec_width) * self.sec_width;
         let mut sec_count = 0;
