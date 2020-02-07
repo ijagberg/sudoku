@@ -89,6 +89,10 @@ impl Sudoku {
         }
     }
 
+    pub fn size(&self) -> usize {
+        self.size
+    }
+
     pub fn height(&self) -> usize {
         self.grid.len()
     }
