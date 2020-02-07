@@ -55,6 +55,10 @@ impl Sudoku {
         }
     }
 
+    pub fn set(&mut self, col: usize, row: usize, v: Option<u32>) {
+        self.grid[row][col] = v;
+    }
+
     pub fn populate_from_str(&mut self, s: &str) {
         let lines: Vec<&str> = s.split('\n').collect();
         assert_eq!(self.size, lines.len());
