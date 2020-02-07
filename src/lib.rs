@@ -1,5 +1,19 @@
+use std::fmt::Debug;
+
 pub enum CreateSudokuError {
     InvalidArg(String),
+}
+
+impl Debug for CreateSudokuError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        writeln!(
+            f,
+            "{}",
+            match self {
+                Self::InvalidArg(message) => format!(r#"invalid argument: "{}""#, message),
+            }
+        )
+    }
 }
 
 #[derive(Clone, PartialEq)]
