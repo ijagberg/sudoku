@@ -1,18 +1,23 @@
 use std::fmt::Debug;
 
 pub enum CreateSudokuError {
-    InvalidArg(String),
+    InvalidSize,
+    InvalidSecWidth,
+    InvalidSecHeight,
+    InvalidCombination,
 }
 
 impl Debug for CreateSudokuError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        writeln!(
-            f,
-            "{}",
-            match self {
-                Self::InvalidArg(message) => format!(r#"invalid argument: "{}""#, message),
+        let output = match self {
+            CreateSudokuError::InvalidSize => "'size' must be a positive integer",
+            CreateSudokuError::InvalidSecWidth => "'sec_width' must be a positive integer",
+            CreateSudokuError::InvalidSecHeight => "'sec_height' must be a positive integer",
+            CreateSudokuError::InvalidCombination => {
+                "'size' must be equal to 'sec_width' * 'sec_height'"
             }
-        )
+        };
+        writeln!(f, "{}", output)
     }
 }
 
@@ -33,32 +38,19 @@ impl Sudoku {
     ///
     /// `sec_width` is the width of the sections in the puzzle.
     /// `sec_height` is the height of the sections in the puzzle.
-    ///
-    /// # Panics
-    /// If `size`, `sec_width` or `sec_height` equals 0
-    ///
-    /// If `sec_width * sec_height != size`
     pub fn new(
         size: usize,
         sec_width: usize,
         sec_height: usize,
     ) -> Result<Self, CreateSudokuError> {
         if size < 1 {
-            Err(CreateSudokuError::InvalidArg(
-                "size must be a positive integer".into(),
-            ))
+            Err(CreateSudokuError::InvalidSize)
         } else if sec_width < 1 {
-            Err(CreateSudokuError::InvalidArg(
-                "sec_width must be a positive integer".into(),
-            ))
+            Err(CreateSudokuError::InvalidSecWidth)
         } else if sec_height < 1 {
-            Err(CreateSudokuError::InvalidArg(
-                "sec_height must be a positive integer".into(),
-            ))
+            Err(CreateSudokuError::InvalidSecHeight)
         } else if sec_width * sec_height != size {
-            Err(CreateSudokuError::InvalidArg(
-                "size must be equal to sec_width * sec_height".into(),
-            ))
+            Err(CreateSudokuError::InvalidCombination)
         } else {
             Ok(Self {
                 size,
@@ -115,6 +107,14 @@ impl Sudoku {
         self.grid[0].len()
     }
 
+    pub fn sec_height(&self) -> usize {
+        self.sec_height
+    }
+
+    pub fn sec_width(&self) -> usize {
+        self.sec_width
+    }
+
     pub fn is_solved(&self) -> bool {
         for v in 1..=self.size {
             // Check rows
@@ -143,33 +143,22 @@ impl Sudoku {
         true
     }
 
-    pub fn count_in_row(&self, row: usize, value: u32) -> usize {
-        self.grid[row]
-            .iter()
-            .filter(|&&value_in_row| value_in_row == Some(value))
+    fn count_in_row(&self, row: usize, value: u32) -> usize {
+        self.row_iter(row)
+            .filter(|&value_in_row| value_in_row == Some(value))
             .count()
     }
 
-    pub fn count_in_col(&self, col: usize, value: u32) -> usize {
-        self.grid
-            .iter()
-            .map(|row| row[col])
+    fn count_in_col(&self, col: usize, value: u32) -> usize {
+        self.col_iter(col)
             .filter(|&value_in_col| value_in_col == Some(value))
             .count()
     }
 
-    pub fn count_in_sec(&self, col: usize, row: usize, value: u32) -> usize {
-        let first_row_in_sec = (row / self.sec_height) * self.sec_height;
-        let first_col_in_sec = (col / self.sec_width) * self.sec_width;
-        let mut sec_count = 0;
-        for sec_row in first_row_in_sec..first_row_in_sec + self.sec_height {
-            for sec_col in first_col_in_sec..first_col_in_sec + self.sec_width {
-                if self.grid[sec_row][sec_col] == Some(value) {
-                    sec_count += 1;
-                }
-            }
-        }
-        sec_count
+    fn count_in_sec(&self, col: usize, row: usize, value: u32) -> usize {
+        self.sec_iter(col, row)
+            .filter(|&value_in_sec| value_in_sec == Some(value))
+            .count()
     }
 
     pub fn can_place_value(&self, col: usize, row: usize, value: u32) -> bool {
@@ -181,6 +170,24 @@ impl Sudoku {
                 + self.count_in_sec(col, row, value))
                 == 0
         }
+    }
+
+    /// Create an iterator over the rows in a given column.
+    /// Goes from top to bottom.
+    pub fn col_iter(&self, col: usize) -> SudokuColIter {
+        SudokuColIter::new(col, 0, &self)
+    }
+
+    /// Create an iterator over the columns in a given row.
+    /// Goes from left to right.
+    pub fn row_iter(&self, row: usize) -> SudokuRowIter {
+        SudokuRowIter::new(row, 0, &self)
+    }
+
+    pub fn sec_iter(&self, col: usize, row: usize) -> SudokuSecIter {
+        let first_row_in_sec = (row / self.sec_height) * self.sec_height;
+        let first_col_in_sec = (col / self.sec_width) * self.sec_width;
+        SudokuSecIter::new(first_row_in_sec, first_col_in_sec, &self)
     }
 }
 
@@ -279,5 +286,111 @@ impl std::fmt::Debug for Sudoku {
         }
 
         Ok(())
+    }
+}
+
+pub struct SudokuColIter<'a> {
+    col: usize,
+    current_row: usize,
+    sudoku: &'a Sudoku,
+}
+
+impl<'a> SudokuColIter<'a> {
+    pub fn new(col: usize, current_row: usize, sudoku: &'a Sudoku) -> Self {
+        Self {
+            col,
+            current_row,
+            sudoku,
+        }
+    }
+}
+
+impl<'a> Iterator for SudokuColIter<'a> {
+    type Item = Option<u32>;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current_row == self.sudoku.height() {
+            None
+        } else {
+            let current_before = self.current_row;
+            self.current_row += 1;
+            Some(self.sudoku.get(self.col, current_before))
+        }
+    }
+}
+
+pub struct SudokuRowIter<'a> {
+    row: usize,
+    current_col: usize,
+    sudoku: &'a Sudoku,
+}
+
+impl<'a> SudokuRowIter<'a> {
+    pub fn new(row: usize, current_col: usize, sudoku: &'a Sudoku) -> Self {
+        Self {
+            row,
+            current_col,
+            sudoku,
+        }
+    }
+}
+
+impl<'a> Iterator for SudokuRowIter<'a> {
+    type Item = Option<u32>;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current_col == self.sudoku.width() {
+            None
+        } else {
+            let current_before = self.current_col;
+            self.current_col += 1;
+            Some(self.sudoku.get(current_before, self.row))
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct SudokuSecIter<'a> {
+    start_row: usize,
+    start_col: usize,
+    current_row: usize,
+    current_col: usize,
+    sudoku: &'a Sudoku,
+    done: bool,
+}
+
+impl<'a> SudokuSecIter<'a> {
+    pub fn new(start_row: usize, start_col: usize, sudoku: &'a Sudoku) -> Self {
+        Self {
+            start_row,
+            start_col,
+            current_row: start_row,
+            current_col: start_col,
+            sudoku,
+            done: false,
+        }
+    }
+}
+
+impl Iterator for SudokuSecIter<'_> {
+    type Item = Option<u32>;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.done {
+            return None;
+        }
+
+        let col_before = self.current_col;
+        let row_before = self.current_row;
+        if self.current_col == self.start_col + self.sudoku.sec_width() - 1 {
+            if self.current_row == self.start_row + self.sudoku.sec_height() - 1 {
+                self.done = true;
+                Some(self.sudoku.get(col_before, row_before))
+            } else {
+                self.current_col = self.start_col;
+                self.current_row += 1;
+                Some(self.sudoku.get(col_before, row_before))
+            }
+        } else {
+            self.current_col += 1;
+            Some(self.sudoku.get(col_before, row_before))
+        }
     }
 }

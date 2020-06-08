@@ -1,4 +1,5 @@
-#[cfg(test)]
+#![cfg(test)]
+
 use sudoku::Sudoku;
 
 fn get_solvable_9x9_test_instance() -> Sudoku {
@@ -26,4 +27,64 @@ fn is_solved() {
 fn can_place() {
     let instance = get_solvable_9x9_test_instance();
     assert_eq!(false, instance.can_place_value(0, 0, 3));
+}
+
+#[test]
+fn col_iter() {
+    let instance = get_solvable_9x9_test_instance();
+    let values_in_col: Vec<_> = instance.col_iter(2).collect();
+    assert_eq!(
+        vec![
+            Some(3),
+            None,
+            Some(1),
+            Some(8),
+            None,
+            Some(6),
+            Some(2),
+            None,
+            Some(5)
+        ],
+        values_in_col
+    );
+}
+
+#[test]
+fn row_iter() {
+    let instance = get_solvable_9x9_test_instance();
+    let values_in_row: Vec<_> = instance.row_iter(8).collect();
+    assert_eq!(
+        vec![
+            None,
+            None,
+            Some(5),
+            None,
+            Some(1),
+            None,
+            Some(3),
+            None,
+            None
+        ],
+        values_in_row
+    );
+}
+
+#[test]
+fn sec_iter() {
+    let instance = get_solvable_9x9_test_instance();
+    let values_in_sec: Vec<_> = instance.sec_iter(5, 4).collect();
+    assert_eq!(
+        vec![
+            Some(1),
+            None,
+            Some(2),
+            None,
+            None,
+            None,
+            Some(7),
+            None,
+            Some(8)
+        ],
+        values_in_sec
+    );
 }
