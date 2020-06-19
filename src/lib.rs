@@ -65,8 +65,22 @@ impl Sudoku {
         self.grid[row][col]
     }
 
+    /// Set the value of the square at column `col`, row `row` to equal `v`
+    /// # Panics
+    /// If `v` is `Some(x)` where `x` is not in `(1..=size)`
     pub fn set(&mut self, col: usize, row: usize, v: Option<u32>) {
-        self.grid[row][col] = v;
+        match v {
+            Some(v) => {
+                if v as usize <= self.size && v >= 1 {
+                    self.grid[row][col] = Some(v);
+                } else {
+                    panic!("invalid value: '{}'", v);
+                }
+            }
+            None => {
+                self.grid[row][col] = v;
+            }
+        }
     }
 
     pub fn populate_from_str(&mut self, s: &str) {
