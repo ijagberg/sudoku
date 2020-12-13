@@ -1,5 +1,7 @@
 use std::fmt::Debug;
 
+use simple_grid::Grid;
+
 pub enum CreateSudokuError {
     InvalidSize,
     InvalidSecWidth,
@@ -26,7 +28,7 @@ pub struct Sudoku {
     size: usize,
     sec_width: usize,
     sec_height: usize,
-    grid: Vec<Vec<Option<u32>>>,
+    grid: Grid<Option<u32>>,
 }
 
 impl Sudoku {
@@ -38,6 +40,7 @@ impl Sudoku {
     ///
     /// `sec_width` is the width of the sections in the puzzle.
     /// `sec_height` is the height of the sections in the puzzle.
+    /// A normal Sudoku puzzle has `sec_width=sec_height=3`.
     pub fn new(
         size: usize,
         sec_width: usize,
@@ -56,13 +59,13 @@ impl Sudoku {
                 size,
                 sec_width,
                 sec_height,
-                grid: vec![vec![None; size]; size],
+                grid: Grid::new(size, size, vec![None; size * size]),
             })
         }
     }
 
     pub fn get(&self, col: usize, row: usize) -> Option<u32> {
-        self.grid[row][col]
+        self.grid[(col, row)]
     }
 
     /// Set the value of the square at column `col`, row `row` to equal `v`
@@ -72,13 +75,13 @@ impl Sudoku {
         match v {
             Some(v) => {
                 if v as usize <= self.size && v >= 1 {
-                    self.grid[row][col] = Some(v);
+                    self.grid[(col, row)] = Some(v);
                 } else {
                     panic!("invalid value: '{}'", v);
                 }
             }
             None => {
-                self.grid[row][col] = v;
+                self.grid[(col, row)] = v;
             }
         }
     }
@@ -114,11 +117,11 @@ impl Sudoku {
     }
 
     pub fn height(&self) -> usize {
-        self.grid.len()
+        self.grid.height()
     }
 
     pub fn width(&self) -> usize {
-        self.grid[0].len()
+        self.grid.width()
     }
 
     pub fn sec_height(&self) -> usize {
@@ -213,8 +216,8 @@ impl std::fmt::Debug for Sudoku {
         let row_outputs: Vec<String> = {
             (0..self.height())
                 .map(|row| {
-                    self.grid[row]
-                        .iter()
+                    self.grid
+                        .row_iter(row)
                         .enumerate()
                         .flat_map(|(col_index, col_value)| {
                             let col_value_output = match col_value {
