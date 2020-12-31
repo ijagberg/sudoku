@@ -32,7 +32,7 @@ fn can_place() {
 #[test]
 fn col_iter() {
     let instance = get_solvable_9x9_test_instance();
-    let values_in_col: Vec<_> = instance.col_iter(2).collect();
+    let values_in_col: Vec<_> = instance.col_iter(2).copied().collect();
     assert_eq!(
         vec![
             Some(3),
@@ -52,7 +52,7 @@ fn col_iter() {
 #[test]
 fn row_iter() {
     let instance = get_solvable_9x9_test_instance();
-    let values_in_row: Vec<_> = instance.row_iter(8).collect();
+    let values_in_row: Vec<_> = instance.row_iter(8).copied().collect();
     assert_eq!(
         vec![
             None,

@@ -162,13 +162,13 @@ impl Sudoku {
 
     fn count_in_row(&self, row: usize, value: u32) -> usize {
         self.row_iter(row)
-            .filter(|&value_in_row| value_in_row == Some(value))
+            .filter(|&value_in_row| value_in_row == &Some(value))
             .count()
     }
 
     fn count_in_col(&self, col: usize, value: u32) -> usize {
         self.col_iter(col)
-            .filter(|&value_in_col| value_in_col == Some(value))
+            .filter(|&value_in_col| value_in_col == &Some(value))
             .count()
     }
 
@@ -191,14 +191,14 @@ impl Sudoku {
 
     /// Create an iterator over the rows in a given column.
     /// Goes from top to bottom.
-    pub fn col_iter(&self, col: usize) -> SudokuColIter {
-        SudokuColIter::new(col, 0, &self)
+    pub fn col_iter(&self, col: usize) -> impl DoubleEndedIterator<Item = &Option<u32>> {
+        self.grid.column_iter(col)
     }
 
     /// Create an iterator over the columns in a given row.
     /// Goes from left to right.
-    pub fn row_iter(&self, row: usize) -> SudokuRowIter {
-        SudokuRowIter::new(row, 0, &self)
+    pub fn row_iter(&self, row: usize) -> impl DoubleEndedIterator<Item = &Option<u32>> {
+        self.grid.row_iter(row)
     }
 
     pub fn sec_iter(&self, col: usize, row: usize) -> SudokuSecIter {
@@ -303,64 +303,6 @@ impl std::fmt::Debug for Sudoku {
         }
 
         Ok(())
-    }
-}
-
-pub struct SudokuColIter<'a> {
-    col: usize,
-    current_row: usize,
-    sudoku: &'a Sudoku,
-}
-
-impl<'a> SudokuColIter<'a> {
-    pub fn new(col: usize, current_row: usize, sudoku: &'a Sudoku) -> Self {
-        Self {
-            col,
-            current_row,
-            sudoku,
-        }
-    }
-}
-
-impl<'a> Iterator for SudokuColIter<'a> {
-    type Item = Option<u32>;
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.current_row == self.sudoku.height() {
-            None
-        } else {
-            let current_before = self.current_row;
-            self.current_row += 1;
-            Some(self.sudoku.get(self.col, current_before))
-        }
-    }
-}
-
-pub struct SudokuRowIter<'a> {
-    row: usize,
-    current_col: usize,
-    sudoku: &'a Sudoku,
-}
-
-impl<'a> SudokuRowIter<'a> {
-    pub fn new(row: usize, current_col: usize, sudoku: &'a Sudoku) -> Self {
-        Self {
-            row,
-            current_col,
-            sudoku,
-        }
-    }
-}
-
-impl<'a> Iterator for SudokuRowIter<'a> {
-    type Item = Option<u32>;
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.current_col == self.sudoku.width() {
-            None
-        } else {
-            let current_before = self.current_col;
-            self.current_col += 1;
-            Some(self.sudoku.get(current_before, self.row))
-        }
     }
 }
 
