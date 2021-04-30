@@ -135,22 +135,22 @@ impl Sudoku {
     pub fn is_solved(&self) -> bool {
         for v in 1..=self.size {
             // Check rows
-            for row in 0..self.height() {
+            for row in self.grid.rows() {
                 if self.count_in_row(row, v as u32) != 1 {
                     return false;
                 }
             }
 
             // Check cols
-            for col in 0..self.width() {
+            for col in self.grid.columns() {
                 if self.count_in_col(col, v as u32) != 1 {
                     return false;
                 }
             }
 
             // Check secs
-            for row in (0..self.height()).step_by(self.sec_height) {
-                for col in (0..self.width()).step_by(self.sec_width) {
+            for row in self.grid.rows().step_by(self.sec_height) {
+                for col in self.grid.columns().step_by(self.sec_width) {
                     if self.count_in_sec(col, row, v as u32) != 1 {
                         return false;
                     }
@@ -214,7 +214,8 @@ impl std::fmt::Debug for Sudoku {
         let value_length = self.size.to_string().len();
 
         let row_outputs: Vec<String> = {
-            (0..self.height())
+            self.grid
+                .rows()
                 .map(|row| {
                     self.grid
                         .row_iter(row)
