@@ -189,6 +189,15 @@ impl Sudoku {
         }
     }
 
+    pub fn place_if_possible(&mut self, col: usize, row: usize, value: u32) -> Result<(), ()> {
+        if self.can_place_value(col, row, value) {
+            self.set(col, row, Some(value));
+            Ok(())
+        } else {
+            Err(())
+        }
+    }
+
     /// Create an iterator over the rows in a given column.
     /// Goes from top to bottom.
     pub fn col_iter(&self, col: usize) -> impl DoubleEndedIterator<Item = &Option<u32>> {
