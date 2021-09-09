@@ -120,8 +120,16 @@ impl Sudoku {
         self.grid.height()
     }
 
+    pub fn rows(&self) -> impl DoubleEndedIterator<Item = usize> {
+        self.grid.rows()
+    }
+
     pub fn width(&self) -> usize {
         self.grid.width()
+    }
+
+    pub fn columns(&self) -> impl DoubleEndedIterator<Item = usize> {
+        self.grid.columns()
     }
 
     pub fn sec_height(&self) -> usize {
